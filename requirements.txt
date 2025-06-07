@@ -1,5 +1,5 @@
 selenium
 requests
-googlesearch
+googlesearch-python
 nest_asyncio
 aiohttp

@@ -33,7 +33,8 @@ async def async_score(words, game_number, request_url, limit):
     """
     positions = [''] * 5000
     #request_url = f"{request_url}?n={game_number}"
-    request_url = f"https://pedantle.certitudes.org/score?n={game_number}"
+    #request_url = f"https://pedantle.certitudes.org/score?n={game_number}"
+    request_url = f"{request_url}?n={game_number}"
 
     connector = aiohttp.TCPConnector(limit=limit)
     timeout   = aiohttp.ClientTimeout(total=None)
