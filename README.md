@@ -1,8 +1,7 @@
 ## Pedantix
 <h1 align="center">
-<img src="(https://github.com/aalp75/pedantix/blob/main/docs/1st%20pedantle.png" width="300">
+![alt text](https://github.com/aalp75/pedantix/blob/main/docs/1st%20pedantle.png)
 </h1><br>
-
 
 ## Usage
 
