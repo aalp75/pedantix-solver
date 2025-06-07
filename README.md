@@ -1,5 +1,13 @@
 ## Pedantix
 
+## Usage
+
+Install dependencies:
+
+```bash
+
+    python -c "import numpy, sys; sys.exit(numpy.test() is False)"
+
 1) Choose a version (pedantix or pedantle),
 3) run main.py
 4) New game starts at 12:00 for pedantix (FR) and 20:00 for pedantle(EN), UTC+2.
