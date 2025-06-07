@@ -27,18 +27,17 @@ def get_game_number(url):
         raise RuntimeError("Couldn't find puzzle-num in page source")
     return int(match.group(1))
 
-async def async_score(words, game_number, request_url, limit):
+async def async_requests(words, game_number, url, request_url, limit=100):
     """
-    perform asyncronously the post request to pedantix for each words of the list
+    perform asyncronously the post requests to the 
+    pedantix server for each words of the list
     """
     positions = [''] * 5000
-    #request_url = f"{request_url}?n={game_number}"
-    #request_url = f"https://pedantle.certitudes.org/score?n={game_number}"
     request_url = f"{request_url}?n={game_number}"
 
     connector = aiohttp.TCPConnector(limit=limit)
     timeout   = aiohttp.ClientTimeout(total=None)
-    headers   = {"Origin": "https://pedantle.certitudes.org"}
+    headers   = {"Origin": url}
 
     async with aiohttp.ClientSession(connector=connector,
                                      timeout=timeout,
@@ -69,19 +68,23 @@ async def async_score(words, game_number, request_url, limit):
     text = 'Wikipedia ' + ' '.join(filter(None, positions))
     return text
 
-def pull_common_words():
+def pull_common_words(version):
     """
     read the most common words from the data folder
     """
-    with open('data/most_common_wikipedia_words_en.txt', 'r', encoding='utf-8') as file:
+    if version == 'pedantix':
+        filename = 'data/most_common_wikipedia_words_fr.txt'
+    if version == 'pedantle':
+        filename = 'data/most_common_wikipedia_words_en.txt'
+    with open(filename, 'r', encoding='utf-8') as file:
         words = file.read().split()
     return words
 
-def google_search(text):
+def google_search(text, num_results=10):
     """
-    read the 10 first results of a specific google search
+    read the first results of a specific google search
     """
-    pages_title = search(text, num_results=10, advanced=True)
+    pages_title = search(text, num_results=num_results, advanced=True)
     return [e.title for e in pages_title]
 
 def write_solution(answers, url):
@@ -118,18 +121,19 @@ def solve(version='pedantix'):
     main entry point for pedantix solver
     """
 
-    url = "https://pedantle.certitudes.org/"
-    request_url = "https://pedantle.certitudes.org/score"
+    url = f"https://{version}.certitudes.org"
+    request_url = f"https://{version}.certitudes.org/score"
 
-    words = pull_common_words()[:2000]
+    words = pull_common_words(version)[:2000]
     game_number = get_game_number(url)
     print(f"Running {version} {game_number}")
     start_time = time.time()
-    text = asyncio.run(async_score(words, game_number, request_url, 100))
+    text = asyncio.run(async_requests(words, game_number, url, request_url, limit=200))
+    #print(text)
     print(f"POST request ran in {time.time() - start_time:.2f} seconds")
 
-    answers =  google_search(text)
+    answers =  google_search(text, 10)
     write_solution(answers, url)
 
 if __name__ == "__main__":
-    solve()
+    solve('pedantix')
