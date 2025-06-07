@@ -1,7 +1,6 @@
 ## Pedantix
-<h1 align="center">
+
 ![alt text](https://github.com/aalp75/pedantix/blob/main/docs/1st%20pedantle.png)
-</h1><br>
 
 ## Usage
 
