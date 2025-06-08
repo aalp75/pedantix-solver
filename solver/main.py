@@ -124,33 +124,46 @@ def write_solution(answers, url):
             guess_btn = wait.until(EC.element_to_be_clickable((By.ID, "guess-btn")))
             guess_btn.click()
 
-def solve(version='pedantix', session='live'):
+def wait_next_game(version, game):
+    """
+    wait until next game starts if game == next
+    """
+    if game == 'next':
+        tz = zoneinfo.ZoneInfo("Europe/Paris")
+        now = datetime.datetime.now(tz)
+
+        if version == 'pedantix':
+            target = datetime.datetime.combine(now.date(),
+                    datetime.time(12, 0, 0, 1),tzinfo=tz) 
+        if version == 'pedantle':
+            target = datetime.datetime.combine(now.date(),
+                    datetime.time(21, 0, 0, 1),tzinfo=tz)
+
+        seconds_to_wait = (target - now).total_seconds()
+        if seconds_to_wait > 0:
+            print(f"Sleeping for {seconds_to_wait:.2f} seconds until {target.isoformat()}")
+            time.sleep(seconds_to_wait)
+
+def solve(version='pedantix', game='live'):
     """
     main entry point for pedantix solver
     """
-    version = 'pedantle'
+    version = 'pedantix'
+    game = 'live'
+
+    wait_next_game(version, game)
+
     url = f"https://{version}.certitudes.org"
     request_url = f"https://{version}.certitudes.org/score"
 
     words = pull_common_words(version)[:2000]
-
-    tz = zoneinfo.ZoneInfo("Europe/Paris")
-    now = datetime.datetime.now(tz)
-
-    target = datetime.datetime.combine(now.date(),
-            datetime.time(21, 0, 0, 1),tzinfo=tz)
-
-    seconds_to_wait = (target - now).total_seconds()
-    if seconds_to_wait > 0:
-        print(f"Sleeping for {seconds_to_wait:.1f} seconds until {target.isoformat()}")
-        time.sleep(seconds_to_wait)
     
     game_number = get_game_number(url)
     print(f"Running {version} {game_number}")
     start_time = time.time()
     text = asyncio.run(async_requests(words, game_number, url, request_url, limit=200))
     #print(text)
-    print(f"POST request ran in {time.time() - start_time:.2f} seconds")
+    print(f"POST request processed in {time.time() - start_time:.2f} seconds")
 
     answers = google_search(text, 10)
     print("Google results:", answers)
@@ -165,6 +178,12 @@ def main():
         choices=["pedantle", "pedantix"],
         required=False,
         help="Which site to solve (pedantle or pedantix)"
+    )
+    parser.add_argument(
+        "-game", "-g",
+        choices=["live", "next"],
+        required=False,
+        help="Which game to solve (live or next)"
     )
     args = parser.parse_args()
     solve(args.version)
