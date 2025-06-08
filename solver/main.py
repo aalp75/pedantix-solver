@@ -153,7 +153,7 @@ def solve(version='pedantix', session='live'):
     print(f"POST request ran in {time.time() - start_time:.2f} seconds")
 
     answers = google_search(text, 10)
-    print("Google resulst:", answers)
+    print("Google results:", answers)
     write_solution(answers, url)
 
 def main():
