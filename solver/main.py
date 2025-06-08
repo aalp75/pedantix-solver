@@ -5,13 +5,15 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
 
 import time
+import datetime
+import zoneinfo
 
 import requests
 import re
 
 from googlesearch import search
 
-import nest_asyncio, asyncio
+import asyncio
 import aiohttp
 
 import argparse
@@ -109,10 +111,12 @@ def write_solution(answers, url):
     driver.find_element(By.CSS_SELECTOR, "button.fc-close.fc-icon-button").click()
 
     for answer in answers:
-        for word in answer.split(' '):
-            if word in ("Wikipedia", "-", ""):
+        clean_answer = answer.replace("'", " ").replace("-", " ")
+        for word in clean_answer.split(' '):
+            if word in ["Wikipédia", "Wikipedia", "-", "", "|", " " , ":", "..."]:
                 continue
-                
+            print("Try:", word)
+
             text_box = wait.until(EC.visibility_of_element_located((By.ID, "guess")))
             text_box.clear()
             text_box.send_keys(word)
@@ -120,15 +124,27 @@ def write_solution(answers, url):
             guess_btn = wait.until(EC.element_to_be_clickable((By.ID, "guess-btn")))
             guess_btn.click()
 
-def solve(version='pedantix'):
+def solve(version='pedantix', session='live'):
     """
     main entry point for pedantix solver
     """
-    version = 'pedantix'
+    version = 'pedantle'
     url = f"https://{version}.certitudes.org"
     request_url = f"https://{version}.certitudes.org/score"
 
     words = pull_common_words(version)[:2000]
+
+    tz = zoneinfo.ZoneInfo("Europe/Paris")
+    now = datetime.datetime.now(tz)
+
+    target = datetime.datetime.combine(now.date(),
+            datetime.time(21, 0, 0, 1),tzinfo=tz)
+
+    seconds_to_wait = (target - now).total_seconds()
+    if seconds_to_wait > 0:
+        print(f"Sleeping for {seconds_to_wait:.1f} seconds until {target.isoformat()}")
+        time.sleep(seconds_to_wait)
+    
     game_number = get_game_number(url)
     print(f"Running {version} {game_number}")
     start_time = time.time()
@@ -137,6 +153,7 @@ def solve(version='pedantix'):
     print(f"POST request ran in {time.time() - start_time:.2f} seconds")
 
     answers = google_search(text, 10)
+    print("Google resulst:", answers)
     write_solution(answers, url)
 
 def main():
