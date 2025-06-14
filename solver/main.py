@@ -148,9 +148,6 @@ def solve(version='pedantix', game='live'):
     """
     main entry point for pedantix solver
     """
-    version = 'pedantix'
-    game = 'live'
-
     wait_next_game(version, game)
 
     url = f"https://{version}.certitudes.org"
@@ -169,7 +166,7 @@ def solve(version='pedantix', game='live'):
     print("Google results:", answers)
     write_solution(answers, url)
 
-def main():
+def main(raw_args=None):
     parser = argparse.ArgumentParser(
         description="Run the Pedantle/Pédantix solver"
     )
@@ -185,8 +182,12 @@ def main():
         required=False,
         help="Which game to solve (live or next)"
     )
-    args = parser.parse_args()
+    if raw_args is None:
+        args = parser.parse_args()
+    else:
+        args = parser.parse_args(raw_args)
     solve(args.version)
 
 if __name__ == "__main__":
-    main()
+    #main()
+    main(["-v", "pedantix", "-g", "live"])
