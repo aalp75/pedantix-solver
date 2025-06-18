@@ -115,7 +115,7 @@ def open_driver(url):
 
     return driver
 
-ANSWERS_CACHE = {"Wikipédia", "Wikipedia", "-", "", "|", " " , ":", "..."}
+ANSWERS_CACHE = {"Wikipédia", "Wikipedia", "Wiki", "-", "", "|", " " , ":", "..."}
 def write_solution(answers, url, driver):
     """
     write the potential answers on the pedantix page
@@ -227,4 +227,4 @@ def main(raw_args=None):
 
 if __name__ == "__main__":
     #main()
-    main(["-v", "pedantle", "-g", "live"])
+    main(["-v", "pedantix", "-g", "live"])
