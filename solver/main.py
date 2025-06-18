@@ -83,8 +83,16 @@ async def async_requests(words, game_number, url, request_url, limit=100):
                     if index < 5000:
                         positions[index] = key
 
-    
-    return 'Wikipedia ' + ' '.join(filter(None, positions))
+    return positions
+
+def merge_words_position(p1, p2):
+    """
+    merge 2 arrays with words positions
+    """
+    for i in range(len(p1)):
+        if p1[i] == "":
+            p1[i] = p2[i]
+    return p1
 
 def google_search(text, num_results=10):
     """
@@ -93,9 +101,25 @@ def google_search(text, num_results=10):
     pages_title = search(text, num_results=num_results, advanced=True)
     return [e.title for e in pages_title]
 
-def write_solution(answers, url):
+def open_driver(url):
+    options = webdriver.ChromeOptions()
+    options.add_experimental_option("detach", True)
+
+    driver = webdriver.Chrome(options=options)
+    driver.get(url)
+
+    close_box = driver.find_element(By.ID, "dialog-close")
+    driver.execute_script("arguments[0].click();", close_box);
+
+    driver.find_element(By.CSS_SELECTOR, "button.fc-close.fc-icon-button").click()
+
+    return driver
+
+ANSWERS_CACHE = {"Wikipédia", "Wikipedia", "-", "", "|", " " , ":", "..."}
+def write_solution(answers, url, driver):
     """
     write the potential answers on the pedantix page
+    """
     """
     options = webdriver.ChromeOptions()
     options.add_experimental_option("detach", True)
@@ -109,11 +133,13 @@ def write_solution(answers, url):
     driver.execute_script("arguments[0].click();", close_box);
 
     driver.find_element(By.CSS_SELECTOR, "button.fc-close.fc-icon-button").click()
-
+    """
+    wait = WebDriverWait(driver, 10)
+    global ANSWERS_CACHE
     for answer in answers:
         clean_answer = answer.replace("'", " ").replace("-", " ")
         for word in clean_answer.split(' '):
-            if word in ["Wikipédia", "Wikipedia", "-", "", "|", " " , ":", "..."]:
+            if word in ANSWERS_CACHE:
                 continue
             print("Try:", word)
 
@@ -123,6 +149,7 @@ def write_solution(answers, url):
             
             guess_btn = wait.until(EC.element_to_be_clickable((By.ID, "guess-btn")))
             guess_btn.click()
+            ANSWERS_CACHE.add(word)
 
 def wait_next_game(version, game):
     """
@@ -153,18 +180,28 @@ def solve(version='pedantix', game='live'):
     url = f"https://{version}.certitudes.org"
     request_url = f"https://{version}.certitudes.org/score"
 
-    words = pull_common_words(version)[:2000]
+    words = pull_common_words(version)
+    words_position = [""] * 5_000
     
     game_number = get_game_number(url)
     print(f"Running {version} {game_number}")
-    start_time = time.time()
-    text = asyncio.run(async_requests(words, game_number, url, request_url, limit=200))
-    #print(text)
-    print(f"POST request processed in {time.time() - start_time:.2f} seconds")
 
-    answers = google_search(text, 10)
-    print("Google results:", answers)
-    write_solution(answers, url)
+    driver = open_driver(url)
+    bucket_size = 500
+    buckets = [words[i:i+bucket_size] for i in range(0, len(words), bucket_size)]
+
+    for bucket in buckets:
+
+        start_time = time.time()
+        req_words_position = asyncio.run(async_requests(bucket, game_number, url, request_url, limit=200))
+
+        words_position = merge_words_position(words_position, req_words_position)
+        text = 'Wikipedia ' + ' '.join(filter(None, words_position))
+        #print(text)
+        print(f"POST request processed in {time.time() - start_time:.2f} seconds")
+        answers = google_search(text, 3)
+        print("Google results:", answers)
+        write_solution(answers, url, driver)
 
 def main(raw_args=None):
     parser = argparse.ArgumentParser(
@@ -190,4 +227,4 @@ def main(raw_args=None):
 
 if __name__ == "__main__":
     #main()
-    main(["-v", "pedantix", "-g", "live"])
+    main(["-v", "pedantle", "-g", "live"])
