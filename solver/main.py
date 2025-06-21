@@ -223,8 +223,8 @@ def main(raw_args=None):
         args = parser.parse_args()
     else:
         args = parser.parse_args(raw_args)
-    solve(args.version)
+    solve(args.version, args.game)
 
 if __name__ == "__main__":
     #main()
-    main(["-v", "pedantix", "-g", "live"])
+    main(["-v", "pedantix", "-g", "next"])

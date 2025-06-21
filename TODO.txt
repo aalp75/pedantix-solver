@@ -1,4 +1,10 @@
+## TO DO ##
+
 - get the number of words to guess from the pedantix page
 - use the post request to check if we have the answer instead of writing the result on the page
 - stop the game when we found the answer
 - add some logs (if it doesn't slow the process)
+
+## DONE ##
+
+- the second argument "game" is not parsable
