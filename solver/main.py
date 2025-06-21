@@ -32,18 +32,42 @@ def pull_common_words(version):
         words = file.read().split()
     return words
 
-def get_game_number(url):
+def get_html(url):
     """
-    read the game number of the pedantix
+    get the html page from the pedantix page
     """
     resp = requests.get(url)
     resp.raise_for_status()
     html = resp.text
-    
+
+    return html
+
+def read_game_number(html):
+    """
+    read the game number from the html
+    """
     match = re.search(r'<[^>]*id=["\']puzzle-num["\'][^>]*>(\d+)</', html)
+
     if not match:
-        raise RuntimeError("Couldn't find puzzle-num in page source")
+        raise RuntimeError("Couldn't find puzzle-num in the html")
     return int(match.group(1))
+
+def read_answer_length(html):
+    """
+    read the length of the  answer from the html
+    """
+    match = re.search(
+        r'<div[^>]*\bid=["\']wiki["\'][^>]*>(.*?)</div>',
+        html,
+        re.DOTALL | re.IGNORECASE
+    )
+    if not match:
+        raise RuntimeError("Couldn't find answer length in the html")
+
+    inner = match.group(1)
+    spans = re.findall(r'<span\b', inner, re.IGNORECASE)
+    return len(spans)
+
 
 async def async_requests(words, game_number, url, request_url, limit=100):
     """
@@ -120,20 +144,6 @@ def write_solution(answers, url, driver):
     """
     write the potential answers on the pedantix page
     """
-    """
-    options = webdriver.ChromeOptions()
-    options.add_experimental_option("detach", True)
-
-    driver = webdriver.Chrome(options=options)
-    driver.get(url)
-
-    wait = WebDriverWait(driver, 10)
-
-    close_box = driver.find_element(By.ID, "dialog-close")
-    driver.execute_script("arguments[0].click();", close_box);
-
-    driver.find_element(By.CSS_SELECTOR, "button.fc-close.fc-icon-button").click()
-    """
     wait = WebDriverWait(driver, 10)
     global ANSWERS_CACHE
     for answer in answers:
@@ -183,8 +193,13 @@ def solve(version='pedantix', game='live'):
     words = pull_common_words(version)
     words_position = [""] * 5_000
     
-    game_number = get_game_number(url)
+    game_html = get_html(url)
+
+    game_number = read_game_number(game_html)
+    answer_length = read_answer_length(game_html)
+
     print(f"Running {version} {game_number}")
+    print(f"{answer_length} words to find!")
 
     driver = open_driver(url)
     bucket_size = 500
@@ -204,21 +219,13 @@ def solve(version='pedantix', game='live'):
         write_solution(answers, url, driver)
 
 def main(raw_args=None):
-    parser = argparse.ArgumentParser(
-        description="Run the Pedantle/Pédantix solver"
-    )
-    parser.add_argument(
-        "-version", "-v",
-        choices=["pedantle", "pedantix"],
-        required=False,
-        help="Which site to solve (pedantle or pedantix)"
-    )
-    parser.add_argument(
-        "-game", "-g",
-        choices=["live", "next"],
-        required=False,
-        help="Which game to solve (live or next)"
-    )
+    parser = argparse.ArgumentParser(description="Run the Pedantle/Pédantix solver")
+    parser.add_argument("-version", "-v", choices=["pedantle", "pedantix"],
+                        required=False, 
+                        help="Which site to solve (pedantle or pedantix)")
+    parser.add_argument("-game", "-g", choices=["live", "next"],
+                        required=False, 
+                        help="Which game to solve (live or next)")
     if raw_args is None:
         args = parser.parse_args()
     else:
@@ -227,4 +234,4 @@ def main(raw_args=None):
 
 if __name__ == "__main__":
     #main()
-    main(["-v", "pedantix", "-g", "next"])
+    main(["-v", "pedantle", "-g", "live"])
