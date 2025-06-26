@@ -140,17 +140,37 @@ def open_driver(url):
     return driver
 
 ANSWERS_CACHE = {"Wikipédia", "Wikipedia", "Wiki", "-", "", "|", " " , ":", "..."}
-def write_solution(answers, url, driver):
-    """
-    write the potential answers on the pedantix page
-    """
-    wait = WebDriverWait(driver, 10)
+def check_solutions(final_answer, answers, url, request_url, game_number):
+    
+    headers = {"Origin": url}
+    request_url = f"{request_url}?n={game_number}"
+
     global ANSWERS_CACHE
     for answer in answers:
         clean_answer = answer.replace("'", " ").replace("-", " ")
         for word in clean_answer.split(' '):
             if word in ANSWERS_CACHE:
                 continue
+            payload = {"num": game_number, "word": word,"answer": [word]}
+            resp = requests.post(request_url, json=payload, headers=headers)
+
+            data = resp.json()
+
+            for key, indices in data.get('x', {}).items():
+                if '#' in key:
+                    continue
+                for index in indices:
+                    if index < len(final_answer):
+                        final_answer[index] = key
+
+            ANSWERS_CACHE.add(word)
+
+def write_solution(answer, driver):
+    """
+    write the potential answers on the pedantix page
+    """
+    wait = WebDriverWait(driver, 10)
+    for word in answer:
             print("Try:", word)
 
             text_box = wait.until(EC.visibility_of_element_located((By.ID, "guess")))
@@ -205,6 +225,8 @@ def solve(version='pedantix', game='live'):
     bucket_size = 500
     buckets = [words[i:i+bucket_size] for i in range(0, len(words), bucket_size)]
 
+    answer = [""] * answer_length
+
     for bucket in buckets:
 
         start_time = time.time()
@@ -212,13 +234,16 @@ def solve(version='pedantix', game='live'):
 
         words_position = merge_words_position(words_position, req_words_position)
         text = 'Wikipedia ' + ' '.join(filter(None, words_position))
-        #print(text)
         print(f"POST request processed in {time.time() - start_time:.2f} seconds")
         answers = google_search(text, 3)
         print("Google results:", answers)
-        write_solution(answers, url, driver)
+        check_solutions(answer, answers, url, request_url, game_number)
+        if "" not in answer:
+            write_solution(answer, driver)
+            break
 
 def main(raw_args=None):
+    start_time = time.time()
     parser = argparse.ArgumentParser(description="Run the Pedantle/Pédantix solver")
     parser.add_argument("-version", "-v", choices=["pedantle", "pedantix"],
                         required=False, 
@@ -231,7 +256,9 @@ def main(raw_args=None):
     else:
         args = parser.parse_args(raw_args)
     solve(args.version, args.game)
+    print(f"Solved {args.version} in {time.time() - start_time:.2f} seconds")
+    
 
 if __name__ == "__main__":
     #main()
-    main(["-v", "pedantix", "-g", "live"])
+    main(["-v", "pedantle", "-g", "live"])
