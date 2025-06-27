@@ -137,12 +137,10 @@ def open_driver(url):
 
     return driver
 
-ANSWERS_CACHE = {"Wikipédia", "Wikipedia", "Wiki", "-", "", "|", " " , ":", "..."}
-def check_solutions(final_answer, answers, url, request_url, game_number):
+#ANSWERS_CACHE = {"Wikipédia", "Wikipedia", "Wiki", "-", "", "|", " " , ":", "..."}
+async def check_solutions(final_answer, answers, url, request_url, game_number):
     
-    headers = {"Origin": url}
-    request_url = f"{request_url}?n={game_number}"
-
+    """
     global ANSWERS_CACHE
     for answer in answers:
         clean_answer = answer.replace("'", " ").replace("-", " ")
@@ -162,6 +160,47 @@ def check_solutions(final_answer, answers, url, request_url, game_number):
                         final_answer[index] = key
 
             ANSWERS_CACHE.add(word)
+    """
+
+    request_url = f"{request_url}?n={game_number}"
+
+    connector = aiohttp.TCPConnector(limit=100)
+    timeout   = aiohttp.ClientTimeout(total=None)
+    headers   = {"Origin": url}
+
+    async with aiohttp.ClientSession(connector=connector,
+                                     timeout=timeout,
+                                     headers=headers) as session:
+
+        tasks = []
+
+        #global ANSWERS_CACHE
+        for answer in answers:
+            clean_answer = answer.replace("'", " ").replace("-", " ")
+            for word in clean_answer.split(' '):
+                #if word in ANSWERS_CACHE:
+                    #continue
+                payload = {"num": game_number, "word": word,"answer": [word]}
+                task = asyncio.create_task(session.post(request_url, json=payload))
+                tasks.append(task)
+
+            for task in asyncio.as_completed(tasks):
+                try:
+                    resp = await task
+                    resp.raise_for_status()
+                    data = await resp.json()
+                except Exception as e:
+                    print(e)
+                    continue
+
+                for key, indices in data.get('x', {}).items():
+                    if '#' in key:
+                        continue
+                    for index in indices:
+                        if index < len(final_answer):
+                            final_answer[index] = key
+
+                #ANSWERS_CACHE.add(word)
 
 def write_solution(answer, driver):
     """
@@ -169,15 +208,12 @@ def write_solution(answer, driver):
     """
     wait = WebDriverWait(driver, 10)
     for word in answer:
-            print("Try:", word)
-
             text_box = wait.until(EC.visibility_of_element_located((By.ID, "guess")))
             text_box.clear()
             text_box.send_keys(word)
             
             guess_btn = wait.until(EC.element_to_be_clickable((By.ID, "guess-btn")))
             guess_btn.click()
-            ANSWERS_CACHE.add(word)
 
 def wait_next_game(version, game):
     """
@@ -235,6 +271,7 @@ def solve(version='pedantix', game='live'):
         answers = google_search(text, 5)
         print("Google results:", answers)
         check_solutions(answer, answers, url, request_url, game_number)
+        asyncio.run(check_solutions(answer, answers, url, request_url, game_number))
         if "" not in answer:
             write_solution(answer, driver)
             break
@@ -254,7 +291,6 @@ def main(raw_args=None):
         args = parser.parse_args(raw_args)
     solve(args.version, args.game)
     print(f"Solved {args.version} in {time.time() - start_time:.2f} seconds")
-    
 
 if __name__ == "__main__":
     #main()
