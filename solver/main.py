@@ -252,7 +252,7 @@ def solve(version='pedantix', game='live'):
     game_number = read_game_number(game_html)
     answer_length = read_answer_length(game_html)
 
-    print(f"Running {version} {game_number}")
+    print(f"#### Running {version} {game_number} ####")
     print(f"{answer_length} words to find!")
 
     driver = open_driver(url)
@@ -269,11 +269,12 @@ def solve(version='pedantix', game='live'):
         text = 'Wikiedia ' + ' '.join(words_position[i] for i in sorted(words_position))
         print(f"POST request processed in {time.time() - start_time:.2f} seconds")
         answers = google_search(text, 5)
-        print("Google results:", answers)
+        #print("Google results:", answers)
         check_solutions(answer, answers, url, request_url, game_number)
         asyncio.run(check_solutions(answer, answers, url, request_url, game_number))
         if "" not in answer:
             write_solution(answer, driver)
+            print("Answer:", ' '.join(answer))
             break
 
 def main(raw_args=None):
@@ -294,4 +295,4 @@ def main(raw_args=None):
 
 if __name__ == "__main__":
     #main()
-    main(["-v", "pedantle", "-g", "live"])
+    main(["-v", "pedantix", "-g", "live"])
