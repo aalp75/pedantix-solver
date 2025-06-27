@@ -56,11 +56,8 @@ def read_answer_length(html):
     """
     read the length of the  answer from the html
     """
-    match = re.search(
-        r'<div[^>]*\bid=["\']wiki["\'][^>]*>(.*?)</div>',
-        html,
-        re.DOTALL | re.IGNORECASE
-    )
+    match = re.search(r'<div[^>]*\bid=["\']wiki["\'][^>]*>(.*?)</div>',
+        html, re.DOTALL | re.IGNORECASE)
     if not match:
         raise RuntimeError("Couldn't find answer length in the html")
 
@@ -68,13 +65,16 @@ def read_answer_length(html):
     spans = re.findall(r'<span\b', inner, re.IGNORECASE)
     return len(spans)
 
-
-async def async_requests(words, game_number, url, request_url, limit=100):
+async def async_requests(words_position, 
+                         words, 
+                         game_number, 
+                         url, 
+                         request_url, 
+                         limit=100) -> None:
     """
     perform asyncronously the post requests to the 
     pedantix server for each words of the list
     """
-    positions = [''] * 5000
     request_url = f"{request_url}?n={game_number}"
 
     connector = aiohttp.TCPConnector(limit=limit)
@@ -104,13 +104,11 @@ async def async_requests(words, game_number, url, request_url, limit=100):
                 if '#' in key:
                     continue
                 for index in indices:
-                    if index < 5000:
-                        positions[index] = key
-
-    return positions
+                    words_position[index] = key
 
 def merge_words_position(p1, p2):
     """
+    DEPRECATED funcion
     merge 2 arrays with words positions
     """
     for i in range(len(p1)):
@@ -211,7 +209,7 @@ def solve(version='pedantix', game='live'):
     request_url = f"https://{version}.certitudes.org/score"
 
     words = pull_common_words(version)
-    words_position = [""] * 5_000
+    words_position = dict()
     
     game_html = get_html(url)
 
@@ -230,12 +228,11 @@ def solve(version='pedantix', game='live'):
     for bucket in buckets:
 
         start_time = time.time()
-        req_words_position = asyncio.run(async_requests(bucket, game_number, url, request_url, limit=200))
+        asyncio.run(async_requests(words_position, bucket, game_number, url, request_url, limit=200))
 
-        words_position = merge_words_position(words_position, req_words_position)
-        text = 'Wikipedia ' + ' '.join(filter(None, words_position))
+        text = 'Wikiedia ' + ' '.join(words_position[i] for i in sorted(words_position))
         print(f"POST request processed in {time.time() - start_time:.2f} seconds")
-        answers = google_search(text, 3)
+        answers = google_search(text, 5)
         print("Google results:", answers)
         check_solutions(answer, answers, url, request_url, game_number)
         if "" not in answer:
