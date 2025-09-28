@@ -264,7 +264,7 @@ def solve(version='pedantix', game='live'):
     for bucket in buckets:
 
         start_time = time.time()
-        asyncio.run(async_requests(words_position, bucket, game_number, url, request_url, limit=200))
+        asyncio.run(async_requests(words_position, bucket, game_number, url, request_url, limit=100))
 
         text = 'Wikiedia ' + ' '.join(words_position[i] for i in sorted(words_position))
         print(f"POST request processed in {time.time() - start_time:.2f} seconds")
