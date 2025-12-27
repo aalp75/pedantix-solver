@@ -1,5 +1,6 @@
 ## Pedantix
 
+![alt text](https://github.com/aalp75/pedantix-solver/blob/main/docs/1st%20pendatix%20word.png)
 ![alt text](https://github.com/aalp75/pedantix/blob/main/docs/1st%20pedantle.png)
 
 ## Usage
@@ -13,6 +14,7 @@ Install dependencies:
 Execute
 ```bash
     python solver/main.py -version pedantix
+    python solver/main.py -version pedantle
 ```
 
 1) Choose a version (pedantix or pedantle),
