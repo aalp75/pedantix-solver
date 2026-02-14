@@ -294,5 +294,4 @@ def main(raw_args=None):
     print(f"Solved {args.version} in {time.time() - start_time:.2f} seconds")
 
 if __name__ == "__main__":
-    #main()
     main(["-v", "pedantix", "-g", "live"])

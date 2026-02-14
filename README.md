@@ -1,7 +1,7 @@
 ## Pedantix
 
-![alt text](https://github.com/aalp75/pedantix-solver/blob/main/docs/1st%20pendatix%20word.png)
-![alt text](https://github.com/aalp75/pedantix/blob/main/docs/1st%20pedantle.png)
+![alt text](screenshots/pedantix-1.png)
+![alt text](screenshots/pedantle-1.png)
 
 ## Usage
 
@@ -19,4 +19,4 @@ Execute
 
 1) Choose a version (pedantix or pedantle),
 3) run main.py
-4) New game starts at 12:00 for pedantix (FR) and 20:00 for pedantle(EN), UTC+2.
+4) New game starts at 12:00 for pedantix and 21:00 for pedantl (UTC+2).
